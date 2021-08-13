@@ -63,6 +63,24 @@ union packet_u_t
 		packet_bytes_t pb;
 };
 
+struct display_t {
+	float value; //float
+	string unit; //string
+	float display_value; //float
+	string display_unit; // string
+	char display_digits[10]; // char *
+	char display_string[16]; // char *
+	string mode; // string
+	string currentType; //string
+	string peak; //string
+	bool relative; //bool
+	bool hold; //bool
+	string mrange; //string
+	string operation; //string
+	bool battery_low; //bool
+	bool sign; //Negative sign
+};
+
 class UT61E_DISP {
 	private:
 		packet_u_t packet;
@@ -104,21 +122,22 @@ class UT61E_DISP {
 			static  status_map_t OPTION3;
 			static  status_map_t OPTION4; 
 
-			float value; //float
-			string unit; //string
-			float display_value; //float
-			string display_unit; // string
-			char display_digits[10]; // char *
-			char display_string[16]; // char *
-			string mode; // string
-			string currentType; //string
-			string peak; //string
-			bool relative; //bool
-			bool hold; //bool
-			string mrange; //string
-			string operation; //string
-			bool battery_low; //bool
-			bool sign; //Negative sign
+			display_t display;
+			// float value; //float
+			// string unit; //string
+			// float display_value; //float
+			// string display_unit; // string
+			// char display_digits[10]; // char *
+			// char display_string[16]; // char *
+			// string mode; // string
+			// string currentType; //string
+			// string peak; //string
+			// bool relative; //bool
+			// bool hold; //bool
+			// string mrange; //string
+			// string operation; //string
+			// bool battery_low; //bool
+			// bool sign; //Negative sign
 
 			UT61E_DISP();
 			UT61E_DISP(HardwareSerial &s);

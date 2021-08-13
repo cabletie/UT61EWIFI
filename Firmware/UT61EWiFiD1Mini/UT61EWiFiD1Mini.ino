@@ -70,6 +70,7 @@ UT61E_DISP dmm;
 
 // In hold state
 boolean _held = false;
+display_t last;
 
 /*--------------------------- Program ---------------------------------------*/
 /**
@@ -174,7 +175,7 @@ void loop() {
         // When in 'HOLD' mode, the DMM continues to transmit 
         // what it's reading and not what is on the display
         // So we don't send any further JSON until this changes
-        if (!(_held && dmm.hold))         
+        if (!(_held && dmm.display.hold))         
         { 
          /* 
           * The parsed values are published as a unified JSON message containing
@@ -183,27 +184,30 @@ void loop() {
 
           // Temp var in which to create display of correct length
           char _display_value[16];
+          display_t *d;
+          if(dmm.display.hold)
+            d = &last;
 
           // Print only the first 7 (or 8 if there is a negative sign) to the output string
           // 7 Digits is 5 digit places, decimal point and string terminator null
-          snprintf(_display_value, dmm.sign?8:7, "%f", dmm.display_value);
+          snprintf(_display_value, d->sign?8:7, "%f", d->display_value);
 
           sprintf(g_json_message_buffer,"{\"value\":%f,\"unit\":\"%s\",\"display_value\":%s,\"display_unit\":\"%s\",\"display_digits\":\"%s\",\"display_string\":\"%s\",\"mode\":\"%s\",\"currentType\":\"%s\",\"peak\":\"%s\",\"relative\":%s,\"hold\":%s,\"range\":\"%s\",\"operation\":\"%s\",\"battery_low\":%s,\"negative\":%s}",
-           dmm.value,
-           dmm.unit.c_str(),
+           d->value,
+           d->unit.c_str(),
            _display_value,
-           dmm.display_unit.c_str(),
-           dmm.display_digits,
-           dmm.display_string,
-           dmm.mode.c_str(),
-           dmm.currentType.c_str(),
-           dmm.peak.c_str(),
-           dmm.relative?"true":"false",
-           dmm.hold?"true":"false",
-           dmm.mrange.c_str(),
-           dmm.operation.c_str(),
-           dmm.battery_low?"true":"false",
-           dmm.sign?"true":"false");
+           d->display_unit.c_str(),
+           d->display_digits,
+           d->display_string,
+           dmm.display.mode.c_str(),
+           dmm.display.currentType.c_str(),
+           dmm.display.peak.c_str(),
+           dmm.display.relative?"true":"false",
+           dmm.display.hold?"true":"false",
+           dmm.display.mrange.c_str(),
+           dmm.display.operation.c_str(),
+           dmm.display.battery_low?"true":"false",
+           d->sign?"true":"false");
 
           size_t msg_length = strlen(g_json_message_buffer);
 
@@ -213,7 +217,10 @@ void loop() {
           client.print(g_json_message_buffer);
           client.endPublish();
 
-          if(dmm.hold)
+          // Save last values 
+          last = dmm.display;
+
+          if(dmm.display.hold)
             _held = true;
           else
             _held = false;

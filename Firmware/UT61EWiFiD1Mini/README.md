@@ -30,7 +30,9 @@ There are three representations of value: `value`, `display_value`, `display_str
 ### display_unit: string
  One of V,A,Ω,Hz,F,deg,% with multiplier prefix as a string such as M,k,m,u,n e.g "nF", "kHz", "MΩ"
 ### mode: string
- Function selector mode. One of "voltage", "current", "resistance", "continuity", "diode", "frequency", "capacitance", "duty_cycle" or "temperature". These represent the major measurement modes. The diagram illustrates which annunciators are illuminated for which mode.
+ Function selector mode. One of "voltage", "current", "resistance", "continuity", "diode", "frequency", "capacitance", "duty_cycle" or "temperature". These represent the major measurement modes. 
+ 
+ The diagram illustrates which annunciators are illuminated for which mode.
 
  ![Figure 1](ut61e_fields.png)
 ### currentType: string
@@ -38,7 +40,7 @@ There are three representations of value: `value`, `display_value`, `display_str
 ### peak: string
  Peak measurement mode one of "", "Pmin" or "Pmax". Data alternates between Pmax and Pmin but the DMM displays only one, alternating when multiple presses of the "PEAK" button are made.
 ### relative: boolean
- In relative mode `true` or `false`. True when `REL△` button is pushed but data contains current actual measurement, not the relative value.
+ In relative mode `true` or `false`. True when `REL△` button is pushed but data contains current actual measurement, not the relative value. This may be the subject of further development - to acurately present the relative value as the display is showing.
 ### hold: boolean
  In hold mode `true` or `false`. When hold mode is on, the data continues to reflect what is being measured, not the `held` value.
 ### range: string

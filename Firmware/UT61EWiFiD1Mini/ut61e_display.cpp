@@ -324,79 +324,79 @@ bool UT61E_DISP::_parse()
     // # function byte is still the same as before so we have to correct for that:
     if (options["VAHZ"])
         dial_function = DIAL_FUNCTION[0b0110010];
-    mode = dial_function.function;
+    display.mode = dial_function.function;
     Range_Dict m_range = dial_function.subfunction[packet.pb.d_range];
-    unit = dial_function.unit;
-    if (mode == "frequency" and options["JUDGE"])
+    display.unit = dial_function.unit;
+    if (display.mode == "frequency" and options["JUDGE"])
     {
-        mode = "duty_cycle";
-        unit = "%";
+        display.mode = "duty_cycle";
+        display.unit = "%";
         m_range = {1e0, 1, "%"}; // 2200.0°C
     };
     if (options["AC"] and options["DC"])
         std::exception(); // ValueError
     else if (options["DC"])
-        currentType = "DC";
+        display.currentType = "DC";
     else if (options["AC"])
-        currentType = "AC";
+        display.currentType = "AC";
 
-    operation = "normal";
+    display.operation = "normal";
     // sometimes there a glitch where both UL and OL are enabled in normal operation
     // so no error is raised when it occurs
     if (options["UL"])
-        operation = "underload";
+        display.operation = "underload";
     else if (options["OL"])
-        operation = "overload";
+        display.operation = "overload";
 
     if (options["AUTO"])
-        mrange = "auto";
+        display.mrange = "auto";
     else
-        mrange = "manual";
+        display.mrange = "manual";
 
     if (options["BATT"])
-        battery_low = true;
+        display.battery_low = true;
     else
-        battery_low = false;
+        display.battery_low = false;
 
     // Relative measurement mode, received value is actual!
     if (options["REL"])
-        relative = true;
+        display.relative = true;
     else
-        relative = false;
+        display.relative = false;
 
     // Data hold mode, received value is actual!
     if (options["HOLD"])
-        hold = true;
+        display.hold = true;
     else
-        hold = false;
+        display.hold = false;
 
     if (options["PMAX"])
     {
-        peak = "Pmax";
+        display.peak = "Pmax";
         if (serial)
             serial->printf("{PMAX : %d}", options["PMAX"]);
     }
     else if (options["PMIN"])
     {
-        peak = "Pmin";
+        display.peak = "Pmin";
         if (serial)
             serial->printf("{PMIN : %d}", options["PMIN"]);
     }
     else
-        peak = "";
+        display.peak = "";
 
-    if (mode == "current" and options["VBAR"])
+    if (display.mode == "current" and options["VBAR"])
         // """Auto μA Current
         // Auto mA Current"""
         ;
-    else if (mode == "current" and not options["VBAR"])
+    else if (display.mode == "current" and not options["VBAR"])
         // """Auto 220.00A/2200.0A
         // Auto 22.000A/220.00A"""
         ;
 
-    if (mode == "temperature" and options["VBAR"])
+    if (display.mode == "temperature" and options["VBAR"])
         m_range = {1e0, 1, "deg"}; // 2200.0°C
-    else if (mode == "temperature" and not options["VBAR"])
+    else if (display.mode == "temperature" and not options["VBAR"])
         m_range = {1e0, 2, "deg"}; // 220.00°C and °F
 
     int d4, d3, d2, d1, d0;
@@ -409,18 +409,18 @@ bool UT61E_DISP::_parse()
     vector<int> digit_array = {d0, d1, d2, d3, d4};
 
     // Do some hokery pokery and move the dp into position
-    sprintf(display_digits, ".%1d%1d%1d%1d%1d", d4, d3, d2, d1, d0);
+    sprintf(display.display_digits, ".%1d%1d%1d%1d%1d", d4, d3, d2, d1, d0);
     for (int i = 0; i < (5 - m_range.dp_digit_position); i++)
     {
-        display_digits[i] = display_digits[i + 1];
-        display_digits[i + 1] = '.';
+        display.display_digits[i] = display.display_digits[i + 1];
+        display.display_digits[i + 1] = '.';
     }
 
     // Strip leading zeroes from the string
     for (int i = 0; i < 6; i++)
     {
-        if(display_digits[i] == '0' && display_digits[i + 1] != '.')
-            display_digits[i] = ' ';
+        if(display.display_digits[i] == '0' && display.display_digits[i + 1] != '.')
+            display.display_digits[i] = ' ';
         else
             break;
     }
@@ -428,45 +428,45 @@ bool UT61E_DISP::_parse()
     if (serial)
     {
         serial->printf("{dp_position : %d}", m_range.dp_digit_position);
-        serial->printf("{display_digits : %s}", display_digits);
+        serial->printf("{display_digits : %s}", display.display_digits);
     }
-    display_value = 0;
+    display.display_value = 0;
     for (int i = 0; i < 5; i++)
-        display_value += digit_array[i] * pow(10, i);
+        display.display_value += digit_array[i] * pow(10, i);
 
     // Set the decimal place in the display value
-    display_value = display_value / pow(10, m_range.dp_digit_position);
+    display.display_value = display.display_value / pow(10, m_range.dp_digit_position);
 
-    string _display_string = display_digits;
-    strcpy(display_string,_display_string.substr(_display_string.find_first_not_of(' ')).c_str());
+    string _display_string = display.display_digits;
+    strcpy(display.display_string,_display_string.substr(_display_string.find_first_not_of(' ')).c_str());
 
     if (options["SIGN"])
     {
-        display_value = -display_value;
-        sign = true;
+        display.display_value = -display.display_value;
+        display.sign = true;
     }
     else
-        sign = false;
+        display.sign = false;
 
-    display_unit = m_range.display_unit;
-    value = float(display_value) * m_range.value_multiplier;
+    display.display_unit = m_range.display_unit;
+    display.value = float(display.display_value) * m_range.value_multiplier;
 
-    if (operation != "normal")
+    if (display.operation != "normal")
     {
-        display_value = 0;
-        value = 0;
-        if(operation == "overload")
+        display.display_value = 0;
+        display.value = 0;
+        if(display.operation == "overload")
         {
-            sprintf(display_digits," OL.  ");
-            strcpy(display_string,"OL.");
+            sprintf(display.display_digits," OL.  ");
+            strcpy(display.display_string,"OL.");
         }
-        if (operation == "underload")
+        if (display.operation == "underload")
         {
-            sprintf(display_digits, " UL.  ");
-            strcpy(display_string,"UL.");
+            sprintf(display.display_digits, " UL.  ");
+            strcpy(display.display_string,"UL.");
         }
         if (serial)
-            serial->println(operation.c_str());
+            serial->println(display.operation.c_str());
     }
     return true;
 };
@@ -475,17 +475,17 @@ bool UT61E_DISP::_parse()
 const string UT61E_DISP::get(){
     stringstream results;
     results << 
-        "value:" << value <<
-        ",unit:" << unit << 
-        ",display_value:" << display_value <<
-        ",display_unit:" << display_unit <<
-        ",mode:" << mode <<
-        ",currentType:" << currentType <<
-        ",peak:" << peak <<
-        ",relative:" << relative <<
-        ",hold:" << hold <<
-        ",range:" << mrange <<
-        ",operation:" << operation <<
-        ",battery_low:" << battery_low;
+        "value:" << display.value <<
+        ",unit:" << display.unit << 
+        ",display_value:" << display.display_value <<
+        ",display_unit:" << display.display_unit <<
+        ",mode:" << display.mode <<
+        ",currentType:" << display.currentType <<
+        ",peak:" << display.peak <<
+        ",relative:" << display.relative <<
+        ",hold:" << display.hold <<
+        ",range:" << display.mrange <<
+        ",operation:" << display.operation <<
+        ",battery_low:" << display.battery_low;
     return results.str();
 }
