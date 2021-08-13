@@ -2,7 +2,7 @@
  * ut61e_display.cpp
  *
  *  Created on: 2021-07-25
- *      Author: CableTie
+ *      Author: @CableTie https://github.com/cabletie
  *    Based on: https://github.com/stv0g/dmm_ut61e
  * 
  */
